@@ -1,0 +1,11 @@
+import { Module } from '@nestjs/common';
+import { PrismaModule } from '../prisma/prisma.module';
+import { ReceivablesController } from './receivables.controller';
+import { ReceivablesService } from './receivables.service';
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [ReceivablesController],
+  providers: [ReceivablesService],
+})
+export class ReceivablesModule {}

@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  password    String
+  role        Role
+  age         Int?
+  contact     String?
+  address     String?
+  permissions Json?    // To store detailed RBAC view/edit/delete settings
+  createdAt   DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+model Client {
+  id               Int        @id @default(autoincrement())
+  name             String     @unique
+  address          String?
+  zone             String?
+  outstandingAmount Float     @default(0)
+  invoices         Invoice[]
+  shipments        Shipment[]
+  receipts         Receipt[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  type      CategoryType
+  products  Product[]
+}
+
+enum CategoryType {
+  PACKAGING
+  FOOD
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  sku         String   @unique
+  stock       Int      @default(0)
+  price       Float
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shipment {
+  id          Int            @id @default(autoincrement())
+  orderNumber String         @unique
+  clientId    Int?
+  client      Client?        @relation(fields: [clientId], references: [id])
+  clientName  String         // Legacy fallback
+  status      ShipmentStatus @default(PENDING)
+  destination String
+  shipDate    DateTime?
+  createdAt   DateTime       @default(now())
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Invoice {
+  id            Int           @id @default(autoincrement())
+  invoiceNumber String        @unique
+  clientId      Int?
+  client        Client?       @relation(fields: [clientId], references: [id])
+  clientName    String        // Legacy fallback
+  amount        Float         @default(0)
+  status        InvoiceStatus @default(UNPAID)
+  dueDate       DateTime
+  items         InvoiceItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id        Int     @id @default(autoincrement())
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  name      String
+  quantity  Int
+  price     Float
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+  OVERDUE
+  CANCELLED
+}
+
+model Receipt {
+  id          Int      @id @default(autoincrement())
+  receiptNo   String   @unique
+  clientId    Int
+  client      Client   @relation(fields: [clientId], references: [id])
+  amount      Float
+  date        DateTime @default(now())
+  paymentMode String   @default("CASH")
+  remarks     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  voucherNo   String   @unique
+  category    String
+  amount      Float
+  date        DateTime @default(now())
+  remarks     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

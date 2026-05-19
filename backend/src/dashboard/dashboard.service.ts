@@ -90,7 +90,6 @@ export class DashboardService {
       db.invoice.findMany({
         where: {
           createdAt: { gte: startDate },
-          status: { not: 'CANCELLED' },
         },
         select: { amount: true, createdAt: true },
       }),

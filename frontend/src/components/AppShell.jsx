@@ -35,7 +35,6 @@ const AppShell = ({ children }) => {
           </div>
           <div>
             <strong>GVS Packages</strong>
-            <span>Supply ERP</span>
           </div>
         </div>
 

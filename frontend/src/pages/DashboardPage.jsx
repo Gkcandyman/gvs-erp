@@ -111,17 +111,6 @@ const DashboardPage = () => {
           })}
         </div>
 
-        {statCards.length > 0 && (
-          <div className="bento-grid" style={{ marginBottom: '22px' }}>
-            {statCards.map((card) => (
-              <div key={card.label} className="bento-card cell-3">
-                <span className="stat-label syncopate">{card.label}</span>
-                <span className="stat-value grotesk" style={{ color: card.color }}>{card.value}</span>
-                <span className="date">{card.sub}</span>
-              </div>
-            ))}
-          </div>
-        )}
 
         <section className="business-chart-card">
           <div className="chart-header">

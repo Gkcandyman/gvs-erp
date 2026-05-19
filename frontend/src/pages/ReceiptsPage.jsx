@@ -24,7 +24,6 @@ const ReceiptsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [exportFormat, setExportFormat] = useState('pdf');
   const [formData, setFormData] = useState({
-    receiptNo: `RCPT-${Date.now().toString().slice(-6)}`,
     clientId: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
@@ -56,7 +55,6 @@ const ReceiptsPage = () => {
 
   const resetForm = () => {
     setFormData({
-      receiptNo: `RCPT-${Date.now().toString().slice(-6)}`,
       clientId: '',
       amount: '',
       date: new Date().toISOString().split('T')[0],
@@ -258,15 +256,7 @@ const ReceiptsPage = () => {
               <button onClick={() => setShowModal(false)}><X /></button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
-              <div className="form-row">
-                <div className="input-box">
-                  <label>RECEIPT NO</label>
-                  <input
-                    value={formData.receiptNo}
-                    onChange={(e) => setFormData((p) => ({ ...p, receiptNo: e.target.value }))}
-                    required
-                  />
-                </div>
+              <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
                 <div className="input-box">
                   <label>DATE</label>
                   <input

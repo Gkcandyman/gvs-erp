@@ -88,7 +88,6 @@ model Invoice {
   client        Client?       @relation(fields: [clientId], references: [id])
   clientName    String        // Legacy fallback
   amount        Float         @default(0)
-  status        InvoiceStatus @default(UNPAID)
   dueDate       DateTime
   items         InvoiceItem[]
   createdAt     DateTime      @default(now())
@@ -102,13 +101,6 @@ model InvoiceItem {
   name      String
   quantity  Int
   price     Float
-}
-
-enum InvoiceStatus {
-  PAID
-  UNPAID
-  OVERDUE
-  CANCELLED
 }
 
 model Receipt {

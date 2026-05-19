@@ -14,14 +14,29 @@ export class ReceiptsService {
     });
   }
 
+  private async generateReceiptNo(db: any) {
+    const latestReceipt = await db.receipt.findFirst({
+      where: { receiptNo: { startsWith: 'R-' } },
+      orderBy: { id: 'desc' },
+    });
+    
+    const latestNumber = latestReceipt 
+      ? parseInt(latestReceipt.receiptNo.replace('R-', '')) 
+      : 0;
+
+    return `R-${String(latestNumber + 1).padStart(3, '0')}`;
+  }
+
   async create(createReceiptDto: CreateReceiptDto) {
     const db = this.prisma as any;
-    const { date, paymentMode, ...data } = createReceiptDto;
+    const { date, paymentMode, receiptNo: _receiptNo, ...data } = createReceiptDto;
 
     return db.$transaction(async (tx) => {
+      const generatedReceiptNo = await this.generateReceiptNo(tx);
       const receipt = await tx.receipt.create({
         data: {
           ...data,
+          receiptNo: generatedReceiptNo,
           date: date ? new Date(date) : new Date(),
           paymentMode: paymentMode || 'CASH',
         },

@@ -17,11 +17,10 @@ const BillingPage = () => {
   const [invoices, setInvoices] = useState([]);
   const [inventoryProducts, setInventoryProducts] = useState([]);
   const [clients, setClients] = useState([]);
-  const [stats, setStats] = useState({ totalReceivable: 0, paidAmount: 0, pendingCount: 0 });
+  const [stats, setStats] = useState({ todaysBilling: 0, netSales: 0, totalInvoices: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [exportFormat, setExportFormat] = useState('pdf');
 
@@ -250,20 +249,17 @@ const BillingPage = () => {
       !query ||
       invoice.invoiceNumber.toLowerCase().includes(query) ||
       invoice.clientName.toLowerCase().includes(query);
-    const matchesStatus =
-      statusFilter === 'all' || invoice.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
-  const exportHeaders = ['Invoice Number', 'Client Name', 'Items', 'Amount', 'Due Date', 'Status'];
+  const exportHeaders = ['Invoice Number', 'Client Name', 'Items', 'Amount', 'Due Date'];
   const exportRows = filteredInvoices.map((invoice) => [
         invoice.invoiceNumber,
         invoice.clientName,
         invoice.items?.length || 0,
         invoice.amount,
         new Date(invoice.dueDate).toLocaleDateString(),
-        invoice.status,
       ]);
 
   const downloadInvoices = () => {
@@ -312,21 +308,18 @@ const BillingPage = () => {
         <div className="bento-grid">
           {/* STATS */}
           <div className="bento-card cell-3">
-            <span className="stat-label syncopate">Receivables</span>
-            <span className="stat-value neon-text grotesk">Rs.{stats.totalReceivable.toLocaleString()}</span>
+            <span className="stat-label syncopate">Today's Billing</span>
+            <span className="stat-value neon-text grotesk">Rs.{stats.todaysBilling?.toLocaleString() || 0}</span>
           </div>
           <div className="bento-card cell-3">
-            <span className="stat-label syncopate">Realized</span>
-            <span className="stat-value grotesk">Rs.{stats.paidAmount.toLocaleString()}</span>
+            <span className="stat-label syncopate">Net Sales</span>
+            <span className="stat-value grotesk">Rs.{stats.netSales?.toLocaleString() || 0}</span>
           </div>
           <div className="bento-card cell-6">
             <div className="quick-access">
-              <span className="stat-label syncopate">Pending Operations</span>
+              <span className="stat-label syncopate">Total Volume</span>
               <div className="pending-nodes">
-                {Array.from({ length: stats.pendingCount }).map((_, i) => (
-                  <div key={i} className="node-pip animate-pulse"></div>
-                ))}
-                <span className="node-count">{stats.pendingCount} PENDING INVOICES</span>
+                <span className="node-count">{stats.totalInvoices} INVOICES GENERATED</span>
               </div>
             </div>
           </div>
@@ -336,17 +329,6 @@ const BillingPage = () => {
             <div className="table-header">
               <h3 className="syncopate">Invoice Register</h3>
               <div className="table-actions">
-                <select
-                  className="table-select"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">All statuses</option>
-                  <option value="UNPAID">Unpaid</option>
-                  <option value="PAID">Paid</option>
-                  <option value="OVERDUE">Overdue</option>
-                  <option value="CANCELLED">Cancelled</option>
-                </select>
                 <select
                   className="table-select"
                   value={exportFormat}
@@ -369,7 +351,6 @@ const BillingPage = () => {
                     <th className="syncopate">Payload</th>
                     <th className="syncopate">Amount</th>
                     <th className="syncopate">Due Date</th>
-                    <th className="syncopate">Status</th>
                     <th className="syncopate">Action</th>
                   </tr>
                 </thead>
@@ -385,7 +366,6 @@ const BillingPage = () => {
                       <td><span className="payload-chip">{invoice.items?.length} ITEMS</span></td>
                       <td><span className="valuation neon-text">Rs.{invoice.amount.toLocaleString()}</span></td>
                       <td><span className="date">{new Date(invoice.dueDate).toLocaleDateString()}</span></td>
-                      <td><span className={`state-tag ${invoice.status.toLowerCase()}`}>{invoice.status}</span></td>
                       <td>
                         <div className="row-cmds">
                           <button onClick={() => handlePrint(invoice)} className="cmd-icon" title="Print Invoice"><Printer size={16} /></button>
@@ -396,7 +376,7 @@ const BillingPage = () => {
                   ))}
                   {filteredInvoices.length === 0 && (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No invoices found for the current filters.</td>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No invoices found for the current search.</td>
                     </tr>
                   )}
                 </tbody>

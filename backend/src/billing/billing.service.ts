@@ -123,23 +123,24 @@ export class BillingService {
 
   async getStats() {
     const db = this.prisma as any;
-    const [totalRes, paidRes, pendingCount] = await Promise.all([
-      db.client.aggregate({
-        _sum: { outstandingAmount: true },
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [todayRes, netSalesRes, totalInvoices] = await Promise.all([
+      db.invoice.aggregate({
+        _sum: { amount: true },
+        where: { createdAt: { gte: today } },
       }),
       db.invoice.aggregate({
         _sum: { amount: true },
-        where: { status: 'PAID' },
       }),
-      db.invoice.count({
-        where: { status: 'UNPAID' },
-      }),
+      db.invoice.count(),
     ]);
 
     return {
-      totalReceivable: totalRes?._sum?.outstandingAmount || 0,
-      paidAmount: paidRes?._sum?.amount || 0,
-      pendingCount: pendingCount || 0,
+      todaysBilling: todayRes?._sum?.amount || 0,
+      netSales: netSalesRes?._sum?.amount || 0,
+      totalInvoices: totalInvoices || 0,
     };
   }
 
@@ -150,7 +151,7 @@ export class BillingService {
       await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
       const deletedInvoice = await tx.invoice.delete({ where: { id } });
 
-      if (invoice?.clientId && invoice.status !== 'CANCELLED') {
+      if (invoice?.clientId) {
         await tx.client.update({
           where: { id: invoice.clientId },
           data: {

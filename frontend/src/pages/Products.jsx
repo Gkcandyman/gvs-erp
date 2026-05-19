@@ -119,13 +119,12 @@ const ProductsPage = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const exportHeaders = ['Product Name', 'Category', 'Unit Count', 'Unit Price', 'Status'];
+  const exportHeaders = ['Product Name', 'Category', 'Unit Count', 'Unit Price'];
   const exportRows = filteredProducts.map((p) => [
     p.name,
     p.category?.name || 'Uncategorized',
     p.stock,
     p.price,
-    p.stock > 1000 ? 'Stable' : 'Unstable',
   ]);
 
   const downloadProducts = () => {
@@ -177,7 +176,7 @@ const ProductsPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="hologram-btn" onClick={openAddModal}><Plus size={20} /> ADD PRODUCT</button>
+            <button className="hologram-btn" onClick={openAddModal}><Plus size={20} /> ADD PURCHASE ENTRY</button>
           </div>
         </header>
 
@@ -235,7 +234,6 @@ const ProductsPage = () => {
                     <th className="syncopate">Category</th>
                     <th className="syncopate">Unit Count</th>
                     <th className="syncopate">Unit Price</th>
-                    <th className="syncopate">Status</th>
                     <th className="syncopate">Action</th>
                   </tr>
                 </thead>
@@ -246,7 +244,6 @@ const ProductsPage = () => {
                       <td><span className="payload-chip">{product.category?.name}</span></td>
                       <td><span className="valuation" style={{ color: product.stock < 1000 ? '#ef4444' : 'var(--text-dark)' }}>{product.stock.toLocaleString()}</span></td>
                       <td><span className="date">Rs.{product.price.toFixed(2)}</span></td>
-                      <td><span className={`state-tag ${product.stock > 1000 ? 'paid' : 'unpaid'}`}>{product.stock > 1000 ? 'Stable' : 'Unstable'}</span></td>
                       <td>
                         <div className="row-cmds">
                           <button onClick={() => openEditModal(product)} className="cmd-icon" title="Edit Product"><Edit2 size={16} /></button>
@@ -272,7 +269,7 @@ const ProductsPage = () => {
         <div className="arctic-modal-overlay">
           <div className="arctic-modal">
             <div className="modal-header">
-              <h3 className="syncopate">{editingProductId ? 'Edit Product' : 'Add Product'}</h3>
+              <h3 className="syncopate">{editingProductId ? 'Edit Purchase Entry' : 'Add Purchase Entry'}</h3>
               <button onClick={() => { setShowAddModal(false); setEditingProductId(null); }}><X /></button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
@@ -294,7 +291,7 @@ const ProductsPage = () => {
               </div>
               <div className="modal-footer">
                 <div className="total-box"><span className="syncopate">Status</span><span className="val neon-text">{editingProductId ? 'READY TO UPDATE' : 'READY TO SAVE'}</span></div>
-                <button type="submit" className="hologram-btn large" disabled={isSubmitting}>{editingProductId ? 'UPDATE PRODUCT' : 'SAVE PRODUCT'}</button>
+                <button type="submit" className="hologram-btn large" disabled={isSubmitting}>{editingProductId ? 'UPDATE ENTRY' : 'SAVE ENTRY'}</button>
               </div>
             </form>
           </div>

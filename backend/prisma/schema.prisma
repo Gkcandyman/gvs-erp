@@ -54,7 +54,6 @@ model Product {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
-  sku         String   @unique
   stock       Int      @default(0)
   price       Float
   categoryId  Int

@@ -6,10 +6,11 @@ import {
   Loader2, LogOut, LayoutDashboard, Users, 
   Truck, ShieldCheck, BarChart3, Bell, X, 
   Globe, CreditCard, RefreshCw, AlertCircle,
-  PackageCheck, Layers, Command, Box,
+  PackageCheck, Layers, Command, Box, Download,
   Database, Activity, MapPin
 } from 'lucide-react';
 import AppShell from '../components/AppShell';
+import { exportCsv, exportExcel, exportPdf } from '../utils/exporters';
 
 const ProductsPage = () => {
   const { user, logout } = useAuth();
@@ -21,6 +22,7 @@ const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [editingProductId, setEditingProductId] = useState(null);
+  const [exportFormat, setExportFormat] = useState('pdf');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -117,6 +119,27 @@ const ProductsPage = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const exportHeaders = ['Product Name', 'Category', 'Unit Count', 'Unit Price', 'Status'];
+  const exportRows = filteredProducts.map((p) => [
+    p.name,
+    p.category?.name || 'Uncategorized',
+    p.stock,
+    p.price,
+    p.stock > 1000 ? 'Stable' : 'Unstable',
+  ]);
+
+  const downloadProducts = () => {
+    if (exportFormat === 'csv') {
+      exportCsv('gvs-inventory', exportHeaders, exportRows);
+      return;
+    }
+    if (exportFormat === 'excel') {
+      exportExcel('gvs-inventory', 'GVS Inventory Register', exportHeaders, exportRows);
+      return;
+    }
+    exportPdf('GVS Inventory Register', exportHeaders, exportRows);
+  };
+
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete "${name}" from inventory? This cannot be undone.`)) return;
     try {
@@ -190,6 +213,17 @@ const ProductsPage = () => {
                     </option>
                   ))}
                 </select>
+                <select
+                  className="table-select"
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value)}
+                  title="Export format"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="csv">CSV</option>
+                  <option value="excel">Excel</option>
+                </select>
+                <button onClick={downloadProducts} className="icon-btn" title="Download inventory"><Download size={18} /></button>
                 <button onClick={fetchData} className="icon-btn"><RefreshCw size={18} /></button>
               </div>
             </div>

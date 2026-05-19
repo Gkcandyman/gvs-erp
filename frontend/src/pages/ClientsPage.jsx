@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { 
-  Users, Search, Plus, Trash2, Edit2, LogOut, 
+  Users, Search, Plus, Trash2, Edit2, LogOut, Download,
   LayoutDashboard, Layers, CreditCard, PackageCheck, Command, X, MapPin
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
+import { exportCsv, exportExcel, exportPdf } from '../utils/exporters';
 
 const ClientsPage = () => {
   const { user, logout } = useAuth();
@@ -16,6 +17,7 @@ const ClientsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [exportFormat, setExportFormat] = useState('pdf');
   
   const [formData, setFormData] = useState({
     name: '', address: '', zone: ''
@@ -98,6 +100,26 @@ const ClientsPage = () => {
     );
   });
 
+  const exportHeaders = ['Client Name', 'Address', 'Zone', 'Outstanding Balance'];
+  const exportRows = filteredClients.map((c) => [
+    c.name,
+    c.address || '-',
+    c.zone || 'Unassigned',
+    c.outstandingAmount || 0,
+  ]);
+
+  const downloadClients = () => {
+    if (exportFormat === 'csv') {
+      exportCsv('gvs-customers', exportHeaders, exportRows);
+      return;
+    }
+    if (exportFormat === 'excel') {
+      exportExcel('gvs-customers', 'GVS Customer Register', exportHeaders, exportRows);
+      return;
+    }
+    exportPdf('GVS Customer Register', exportHeaders, exportRows);
+  };
+
   if (isLoading) return <div className="arctic-loading"><div className="cryo-chamber"><Users size={40} className="ice-icon" /></div><p className="syncopate">Loading customer accounts...</p></div>;
 
   return (
@@ -124,6 +146,22 @@ const ClientsPage = () => {
 
         <div className="bento-grid">
           <div className="bento-card table-cell cell-12">
+            <div className="table-header">
+              <h3 className="syncopate">Customer Register</h3>
+              <div className="table-actions">
+                <select
+                  className="table-select"
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value)}
+                  title="Export format"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="csv">CSV</option>
+                  <option value="excel">Excel</option>
+                </select>
+                <button onClick={downloadClients} className="icon-btn" title="Download customers"><Download size={18} /></button>
+              </div>
+            </div>
             <div className="arctic-table-wrap">
               <table className="arctic-table">
                 <thead>

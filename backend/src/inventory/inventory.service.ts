@@ -5,16 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 export class InventoryService {
   constructor(private prisma: PrismaService) {}
 
-  private async generateSku() {
-    const latestProduct = await this.prisma.product.findFirst({
-      where: { sku: { startsWith: 'GVS-' } },
-      orderBy: { id: 'desc' },
-    });
-    const latestNumber = Number(latestProduct?.sku?.replace('GVS-', '')) || 0;
-
-    return `GVS-${String(latestNumber + 1).padStart(5, '0')}`;
-  }
-
   async findAll() {
     return this.prisma.product.findMany({
       include: { category: true },
@@ -31,22 +21,15 @@ export class InventoryService {
   }
 
   async create(data: any) {
-    const { sku: _sku, ...productData } = data;
-    const sku = await this.generateSku();
-
     return this.prisma.product.create({
-      data: {
-        ...productData,
-        sku,
-      },
+      data,
     });
   }
 
   async update(id: number, data: any) {
-    const { sku, ...updateData } = data;
     return this.prisma.product.update({
       where: { id },
-      data: updateData,
+      data,
       include: { category: true },
     });
   }

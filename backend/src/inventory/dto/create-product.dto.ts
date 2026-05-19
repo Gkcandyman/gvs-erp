@@ -12,10 +12,6 @@ export class CreateProductDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  sku?: string;
 
   @ApiProperty()
   @IsNumber()

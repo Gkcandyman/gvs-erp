@@ -65,11 +65,15 @@ export class DashboardService {
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - 6);
 
+    const formatDateLocal = (d: Date) => {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
     const days = Array.from({ length: 7 }, (_, index) => {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + index);
       return {
-        key: date.toISOString().slice(0, 10),
+        key: formatDateLocal(date),
         label: date.toLocaleDateString('en-IN', {
           day: '2-digit',
           month: 'short',
@@ -101,19 +105,19 @@ export class DashboardService {
     ]);
 
     invoices.forEach((invoice) => {
-      const key = invoice.createdAt.toISOString().slice(0, 10);
+      const key = formatDateLocal(invoice.createdAt);
       const day = metricsByDay.get(key);
       if (day) day.sales += invoice.amount || 0;
     });
 
     receipts.forEach((receipt) => {
-      const key = receipt.date.toISOString().slice(0, 10);
+      const key = formatDateLocal(receipt.date);
       const day = metricsByDay.get(key);
       if (day) day.collections += receipt.amount || 0;
     });
 
     expenses.forEach((expense) => {
-      const key = expense.date.toISOString().slice(0, 10);
+      const key = formatDateLocal(expense.date);
       const day = metricsByDay.get(key);
       if (day) day.purchases += expense.amount || 0;
     });

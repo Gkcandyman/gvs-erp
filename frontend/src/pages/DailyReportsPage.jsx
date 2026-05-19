@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import AppShell from '../components/AppShell';
-import { Plus, Printer, Trash2, Edit2, X, RefreshCw, Save, IndianRupee } from 'lucide-react';
+import { Plus, Printer, Trash2, Edit2, X, RefreshCw, Save, IndianRupee, Eye } from 'lucide-react';
 
 const defaultCashDenominations = [500, 200, 100, 50, 20, 10, 5, 2, 1];
 
@@ -85,9 +85,12 @@ const DailyReportsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [modalMode, setModalMode] = useState('edit');
+  const [printAfterOpen, setPrintAfterOpen] = useState(false);
   const [formData, setFormData] = useState(() => getEmptyForm(user?.name));
 
   const calculated = useMemo(() => calculateReport(formData), [formData]);
+  const isViewOnly = modalMode === 'view';
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -119,10 +122,19 @@ const DailyReportsPage = () => {
   }, []);
 
   useEffect(() => {
-    if (showModal && formData.date) {
+    if (showModal && formData.date && !isViewOnly) {
       fetchDailyStats(formData.date);
     }
-  }, [showModal, formData.date]);
+  }, [showModal, formData.date, isViewOnly]);
+
+  useEffect(() => {
+    if (!showModal || !printAfterOpen) return;
+    const timer = window.setTimeout(() => {
+      window.print();
+      setPrintAfterOpen(false);
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [showModal, printAfterOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -196,11 +208,13 @@ const DailyReportsPage = () => {
 
   const openAddModal = () => {
     setEditingId(null);
+    setModalMode('edit');
+    setPrintAfterOpen(false);
     setFormData(getEmptyForm(user?.name));
     setShowModal(true);
   };
 
-  const openEditModal = (report) => {
+  const getReportFormData = (report) => {
     const expenses = Array.isArray(report.expenses) ? [...report.expenses] : [];
     while (expenses.length < 6) expenses.push({ name: '', amount: '' });
 
@@ -210,8 +224,7 @@ const DailyReportsPage = () => {
       return { denomination, count: found ? found.count : '' };
     });
 
-    setEditingId(report.id);
-    setFormData({
+    return {
       date: new Date(report.date).toISOString().split('T')[0],
       staffName: report.staffName || user?.name || '',
       voucherNoFrom: report.voucherNoFrom || '',
@@ -228,7 +241,30 @@ const DailyReportsPage = () => {
       totalCollection: report.totalCollection || 0,
       dueAmount: report.dueAmount || 0,
       netAmount: report.netAmount || 0,
-    });
+    };
+  };
+
+  const openEditModal = (report) => {
+    setEditingId(report.id);
+    setModalMode('edit');
+    setPrintAfterOpen(false);
+    setFormData(getReportFormData(report));
+    setShowModal(true);
+  };
+
+  const openViewModal = (report) => {
+    setEditingId(null);
+    setModalMode('view');
+    setPrintAfterOpen(false);
+    setFormData(getReportFormData(report));
+    setShowModal(true);
+  };
+
+  const handlePrintReport = (report) => {
+    setEditingId(null);
+    setModalMode('view');
+    setFormData(getReportFormData(report));
+    setPrintAfterOpen(true);
     setShowModal(true);
   };
 
@@ -276,6 +312,7 @@ const DailyReportsPage = () => {
                     <th className="syncopate">Voucher Count</th>
                     <th className="syncopate">Gross</th>
                     <th className="syncopate">Expenses</th>
+                    <th className="syncopate">Net Amount</th>
                     <th className="syncopate">Actions</th>
                   </tr>
                 </thead>
@@ -287,21 +324,30 @@ const DailyReportsPage = () => {
                       <td><span className="valuation">{report.totalVouchers || 0}</span></td>
                       <td><span className="valuation">{formatMoney(report.totalCollection)}</span></td>
                       <td><span className="valuation">{formatMoney(report.totalExpenses)}</span></td>
+                      <td><span className="valuation" style={{ color: '#0f766e' }}>{formatMoney(report.netAmount)}</span></td>
                       <td>
                         <div className="row-cmds">
-                          <button onClick={() => openEditModal(report)} className="cmd-icon" title="View/Edit">
+                          <button onClick={() => openViewModal(report)} className="cmd-icon" title="View">
+                            <Eye size={16} />
+                          </button>
+                          <button onClick={() => handlePrintReport(report)} className="cmd-icon" title="Print">
+                            <Printer size={16} />
+                          </button>
+                          <button onClick={() => openEditModal(report)} className="cmd-icon" title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button onClick={() => handleDelete(report.id)} className="cmd-icon" style={{ color: '#ef4444' }} title="Delete">
-                            <Trash2 size={16} />
-                          </button>
+                          {user?.role === 'ADMIN' && (
+                            <button onClick={() => handleDelete(report.id)} className="cmd-icon" style={{ color: '#ef4444' }} title="Delete">
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ))}
                   {reports.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
                         No reports found.
                       </td>
                     </tr>
@@ -334,11 +380,11 @@ const DailyReportsPage = () => {
               <div className="report-meta-grid">
                 <label>
                   <span>Name of Staff</span>
-                  <input type="text" name="staffName" value={formData.staffName} onChange={handleInputChange} />
+                  <input type="text" name="staffName" value={formData.staffName} onChange={handleInputChange} readOnly={isViewOnly} />
                 </label>
                 <label>
                   <span>Date</span>
-                  <input type="date" name="date" value={formData.date} onChange={handleInputChange} />
+                  <input type="date" name="date" value={formData.date} onChange={handleInputChange} disabled={isViewOnly} />
                 </label>
               </div>
 
@@ -350,11 +396,11 @@ const DailyReportsPage = () => {
                 <div className="voucher-grid">
                   <label>
                     <span>Starting Voucher No</span>
-                    <input type="number" name="voucherNoFrom" value={formData.voucherNoFrom} onChange={handleInputChange} />
+                    <input type="number" name="voucherNoFrom" value={formData.voucherNoFrom} onChange={handleInputChange} readOnly={isViewOnly} />
                   </label>
                   <label>
                     <span>Ending Voucher No</span>
-                    <input type="number" name="voucherNoTo" value={formData.voucherNoTo} onChange={handleInputChange} />
+                    <input type="number" name="voucherNoTo" value={formData.voucherNoTo} onChange={handleInputChange} readOnly={isViewOnly} />
                   </label>
                   <label>
                     <span>Total Voucher Count</span>
@@ -384,6 +430,7 @@ const DailyReportsPage = () => {
                               type="text"
                               value={expense.name}
                               onChange={(e) => handleExpenseChange(index, 'name', e.target.value)}
+                              readOnly={isViewOnly}
                             />
                           </td>
                           <td>
@@ -391,6 +438,7 @@ const DailyReportsPage = () => {
                               type="number"
                               value={expense.amount}
                               onChange={(e) => handleExpenseChange(index, 'amount', e.target.value)}
+                              readOnly={isViewOnly}
                             />
                           </td>
                         </tr>
@@ -403,9 +451,11 @@ const DailyReportsPage = () => {
                       </tr>
                     </tfoot>
                   </table>
-                  <button type="button" className="add-line-btn hide-on-print" onClick={handleAddExpenseRow}>
-                    <Plus size={14} /> Add Expense
-                  </button>
+                  {!isViewOnly && (
+                    <button type="button" className="add-line-btn hide-on-print" onClick={handleAddExpenseRow}>
+                      <Plus size={14} /> Add Expense
+                    </button>
+                  )}
                 </section>
 
                 <section className="print-section">
@@ -430,6 +480,7 @@ const DailyReportsPage = () => {
                               type="number"
                               value={cash.count}
                               onChange={(e) => handleCashChange(index, e.target.value)}
+                              readOnly={isViewOnly}
                             />
                           </td>
                           <td>{cash.denomination} x {integerValue(cash.count)} = {formatMoney(cash.denomination * integerValue(cash.count))}</td>
@@ -444,7 +495,7 @@ const DailyReportsPage = () => {
                       <tr>
                         <td colSpan="2">Cash Received GPay</td>
                         <td>
-                          <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} />
+                          <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} readOnly={isViewOnly} />
                         </td>
                       </tr>
                       <tr>
@@ -497,12 +548,16 @@ const DailyReportsPage = () => {
                     <input type="number" value={calculated.totalExpenses.toFixed(2)} readOnly />
                   </label>
                   <label>
+                    <span>Net Amount</span>
+                    <input type="number" value={calculated.netAmount.toFixed(2)} readOnly />
+                  </label>
+                  <label>
                     <span>Cash Received From Hand</span>
                     <input type="number" value={calculated.cashReceived.toFixed(2)} readOnly />
                   </label>
                   <label>
                     <span>Cash Received GPay</span>
-                    <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} />
+                    <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} readOnly={isViewOnly} />
                   </label>
                   <label>
                     <span>Total Net Amount</span>
@@ -512,11 +567,13 @@ const DailyReportsPage = () => {
               </section>
             </div>
 
-            <div className="report-modal-footer hide-on-print">
-              <button type="submit" className="hologram-btn large w-full" disabled={isSubmitting}>
-                <Save size={18} /> {isSubmitting ? 'SAVING...' : 'SAVE DAILY REPORT'}
-              </button>
-            </div>
+            {!isViewOnly && (
+              <div className="report-modal-footer hide-on-print">
+                <button type="submit" className="hologram-btn large w-full" disabled={isSubmitting}>
+                  <Save size={18} /> {isSubmitting ? 'SAVING...' : 'SAVE DAILY REPORT'}
+                </button>
+              </div>
+            )}
           </div>
         </form>
       )}

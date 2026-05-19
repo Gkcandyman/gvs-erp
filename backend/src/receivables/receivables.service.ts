@@ -7,6 +7,7 @@ export class ReceivablesService {
 
   async findOutstanding() {
     const customers = await this.prisma.client.findMany({
+      where: { outstandingAmount: { gt: 0 } },
       orderBy: [{ outstandingAmount: 'desc' }, { name: 'asc' }],
       select: {
         id: true,

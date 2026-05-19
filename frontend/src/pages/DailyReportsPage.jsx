@@ -18,6 +18,8 @@ const integerValue = (value) => {
 
 const formatMoney = (value) => `Rs.${numberValue(value).toFixed(2)}`;
 
+const moneyMatches = (left, right) => Math.round(numberValue(left) * 100) === Math.round(numberValue(right) * 100);
+
 const getVoucherCount = (from, to) => {
   const start = integerValue(from);
   const end = integerValue(to);
@@ -41,7 +43,6 @@ const getEmptyForm = (userName = '') => ({
   totalSales: 0,
   totalCollection: 0,
   dueAmount: 0,
-  profit: 0,
   netAmount: 0,
 });
 
@@ -55,25 +56,25 @@ const calculateReport = (data) => {
     (sum, item) => sum + numberValue(item.denomination) * integerValue(item.count),
     0,
   );
-  const voucherValue = numberValue(data.voucherValue);
-  const totalSales = numberValue(data.totalSales);
   const totalCollection = numberValue(data.totalCollection);
+  const totalGrossAmount = totalCollection;
   const gpayAmount = numberValue(data.gpayAmount);
-  const netAmount = voucherValue - totalExpenses;
-  const grandTotal = cashTotal + gpayAmount;
-  const cashReceived = netAmount;
-  const overallCollection = totalCollection + gpayAmount + cashReceived;
-  const profit = totalSales + totalCollection - totalExpenses;
+  const netAmount = totalGrossAmount - totalExpenses;
+  const collectionTotal = cashTotal + gpayAmount;
+  const grandTotal = collectionTotal;
+  const cashReceived = cashTotal;
+  const isAmountMatched = moneyMatches(collectionTotal, netAmount);
 
   return {
     totalVouchers,
     totalExpenses,
     cashTotal,
+    totalGrossAmount,
     netAmount,
+    collectionTotal,
     grandTotal,
     cashReceived,
-    overallCollection,
-    profit,
+    isAmountMatched,
   };
 };
 
@@ -150,6 +151,11 @@ const DailyReportsPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!calculated.isAmountMatched) {
+      alert(`Amount mismatch. Net amount is ${formatMoney(calculated.netAmount)} but hand cash + GPay is ${formatMoney(calculated.collectionTotal)}.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -164,7 +170,6 @@ const DailyReportsPage = () => {
         totalSales: numberValue(formData.totalSales),
         totalCollection: numberValue(formData.totalCollection),
         dueAmount: numberValue(formData.dueAmount),
-        profit: calculated.profit,
         netAmount: calculated.netAmount,
         expenses: formData.expenses
           .filter((expense) => expense.name || expense.amount)
@@ -222,7 +227,6 @@ const DailyReportsPage = () => {
       totalSales: report.totalSales || 0,
       totalCollection: report.totalCollection || 0,
       dueAmount: report.dueAmount || 0,
-      profit: report.profit || 0,
       netAmount: report.netAmount || 0,
     });
     setShowModal(true);
@@ -269,9 +273,9 @@ const DailyReportsPage = () => {
                   <tr>
                     <th className="syncopate">Date</th>
                     <th className="syncopate">Staff</th>
-                    <th className="syncopate">Voucher</th>
+                    <th className="syncopate">Voucher Count</th>
+                    <th className="syncopate">Gross</th>
                     <th className="syncopate">Expenses</th>
-                    <th className="syncopate">Profit</th>
                     <th className="syncopate">Actions</th>
                   </tr>
                 </thead>
@@ -280,9 +284,9 @@ const DailyReportsPage = () => {
                     <tr key={report.id}>
                       <td><span className="date">{new Date(report.date).toLocaleDateString()}</span></td>
                       <td><span className="client">{report.staffName}</span></td>
-                      <td><span className="valuation">{formatMoney(report.voucherValue)}</span></td>
+                      <td><span className="valuation">{report.totalVouchers || 0}</span></td>
+                      <td><span className="valuation">{formatMoney(report.totalCollection)}</span></td>
                       <td><span className="valuation">{formatMoney(report.totalExpenses)}</span></td>
-                      <td><span className="valuation" style={{ color: '#10b981' }}>{formatMoney(report.profit)}</span></td>
                       <td>
                         <div className="row-cmds">
                           <button onClick={() => openEditModal(report)} className="cmd-icon" title="View/Edit">
@@ -353,8 +357,8 @@ const DailyReportsPage = () => {
                     <input type="number" name="voucherNoTo" value={formData.voucherNoTo} onChange={handleInputChange} />
                   </label>
                   <label>
-                    <span>Total Voucher Amount</span>
-                    <input type="number" name="voucherValue" value={formData.voucherValue} onChange={handleInputChange} />
+                    <span>Total Voucher Count</span>
+                    <input type="number" value={calculated.totalVouchers} readOnly />
                   </label>
                 </div>
               </section>
@@ -434,18 +438,31 @@ const DailyReportsPage = () => {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan="2">Cash Total</td>
+                        <td colSpan="2">Cash Received From Hand</td>
                         <td>{formatMoney(calculated.cashTotal)}</td>
+                      </tr>
+                      <tr>
+                        <td colSpan="2">Cash Received GPay</td>
+                        <td>
+                          <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan="2">Total Net Amount</td>
+                        <td>{formatMoney(calculated.collectionTotal)}</td>
                       </tr>
                     </tfoot>
                   </table>
+                  <div className={calculated.isAmountMatched ? 'amount-match ok' : 'amount-match mismatch'}>
+                    {calculated.isAmountMatched ? 'Amount matched' : 'Amount mismatch'}
+                  </div>
                 </section>
               </div>
 
               <section className="net-strip">
                 <div>
-                  <span>Gross Amount</span>
-                  <strong>{formatMoney(formData.voucherValue)}</strong>
+                  <span>Total Gross Amount</span>
+                  <strong>{formatMoney(calculated.totalGrossAmount)}</strong>
                 </div>
                 <div>
                   <span>Expenses</span>
@@ -468,32 +485,28 @@ const DailyReportsPage = () => {
                     <input type="number" value={numberValue(formData.totalSales)} readOnly />
                   </label>
                   <label>
-                    <span>Total Voucher</span>
-                    <input type="number" value={numberValue(formData.voucherValue)} readOnly />
+                    <span>Total Voucher Count</span>
+                    <input type="number" value={calculated.totalVouchers} readOnly />
+                  </label>
+                  <label>
+                    <span>Total Gross Amount</span>
+                    <input type="number" value={calculated.totalGrossAmount.toFixed(2)} readOnly />
                   </label>
                   <label>
                     <span>Total Expenses</span>
                     <input type="number" value={calculated.totalExpenses.toFixed(2)} readOnly />
                   </label>
                   <label>
-                    <span>Total Collection From Receipts</span>
-                    <input type="number" value={numberValue(formData.totalCollection)} readOnly />
-                  </label>
-                  <label>
-                    <span>GPay Cash</span>
-                    <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} />
-                  </label>
-                  <label>
-                    <span>Cash Received</span>
+                    <span>Cash Received From Hand</span>
                     <input type="number" value={calculated.cashReceived.toFixed(2)} readOnly />
                   </label>
                   <label>
-                    <span>Total Collection</span>
-                    <input type="number" value={calculated.overallCollection.toFixed(2)} readOnly />
+                    <span>Cash Received GPay</span>
+                    <input type="number" name="gpayAmount" value={formData.gpayAmount} onChange={handleInputChange} />
                   </label>
-                  <label className="profit-field">
-                    <span>Profit</span>
-                    <input type="number" value={calculated.profit.toFixed(2)} readOnly />
+                  <label>
+                    <span>Total Net Amount</span>
+                    <input type="number" value={calculated.collectionTotal.toFixed(2)} readOnly />
                   </label>
                 </div>
               </section>

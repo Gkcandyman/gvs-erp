@@ -153,6 +153,8 @@ model DailyReport {
   totalCollection Float    @default(0)
   
   dueAmount       Float    @default(0)
+  profit          Float    @default(0)
+  netAmount       Float    @default(0)
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

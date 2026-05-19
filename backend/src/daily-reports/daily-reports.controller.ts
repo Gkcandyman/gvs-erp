@@ -18,6 +18,11 @@ export class DailyReportsController {
     return this.dailyReportsService.findAll();
   }
 
+  @Get('stats/:date')
+  getDailyStats(@Param('date') date: string) {
+    return this.dailyReportsService.getDailyStats(date);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.dailyReportsService.findOne(+id);

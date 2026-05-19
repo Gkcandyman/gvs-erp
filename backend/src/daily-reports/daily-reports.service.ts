@@ -36,4 +36,35 @@ export class DailyReportsService {
       where: { id },
     });
   }
+
+  async getDailyStats(dateStr: string) {
+    const startOfDay = new Date(dateStr);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(dateStr);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        }
+      }
+    });
+    
+    const receipts = await this.prisma.receipt.findMany({
+      where: {
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        }
+      }
+    });
+
+    const totalSales = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+    const totalCollection = receipts.reduce((sum, rec) => sum + (rec.amount || 0), 0);
+
+    return { totalSales, totalCollection };
+  }
 }

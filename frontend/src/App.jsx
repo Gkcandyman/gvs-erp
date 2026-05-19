@@ -8,6 +8,7 @@ import ReceiptsPage from './pages/ReceiptsPage';
 import OutstandingReceivablesPage from './pages/OutstandingReceivablesPage';
 import UsersPage from './pages/UsersPage';
 import ClientsPage from './pages/ClientsPage';
+import DailyReportsPage from './pages/DailyReportsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -57,6 +58,15 @@ function App() {
           element={
             <ProtectedRoute>
               <OutstandingReceivablesPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/daily-reports" 
+          element={
+            <ProtectedRoute>
+              <DailyReportsPage />
             </ProtectedRoute>
           } 
         />

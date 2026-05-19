@@ -12,6 +12,7 @@ import { BillingModule } from './billing/billing.module';
 import { ClientsModule } from './clients/clients.module';
 import { ReceiptsModule } from './receipts/receipts.module';
 import { ReceivablesModule } from './receivables/receivables.module';
+import { DailyReportsModule } from './daily-reports/daily-reports.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ReceivablesModule } from './receivables/receivables.module';
     ClientsModule,
     ReceiptsModule,
     ReceivablesModule,
+    DailyReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

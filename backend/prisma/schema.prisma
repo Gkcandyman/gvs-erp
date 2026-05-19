@@ -126,3 +126,34 @@ model Expense {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model DailyReport {
+  id              Int      @id @default(autoincrement())
+  date            DateTime @unique
+  staffName       String
+  
+  // Voucher info
+  voucherNoFrom   String?
+  voucherNoTo     String?
+  totalVouchers   Int      @default(0)
+  voucherValue    Float    @default(0)
+  
+  // Expenses and Cash breakdown as JSON
+  expenses        Json     @default("[]")
+  totalExpenses   Float    @default(0)
+  
+  cashBreakdown   Json     @default("[]")
+  cashTotal       Float    @default(0)
+  
+  // Totals & Summaries
+  gpayAmount      Float    @default(0)
+  grandTotal      Float    @default(0)
+  
+  totalSales      Float    @default(0)
+  totalCollection Float    @default(0)
+  
+  dueAmount       Float    @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

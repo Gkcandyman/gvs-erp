@@ -187,12 +187,22 @@ const ProductsPage = () => {
             <span className="stat-value neon-text grotesk">{products.length} ITEMS</span>
           </div>
           <div className="bento-card cell-4">
-            <span className="stat-label syncopate">Critical Stock</span>
-            <span className="stat-value grotesk" style={{ color: '#ef4444' }}>{products.filter(p => p.stock < 1000).length} ALERTS</span>
+            <span className="stat-label syncopate">Packaging Material</span>
+            <span className="stat-value neon-text grotesk" style={{ color: '#38bdf8' }}>
+              Rs. {products.reduce((acc, p) => {
+                const cat = categories.find(c => c.id === p.categoryId);
+                return cat?.type === 'PACKAGING' ? acc + (p.stock * p.price) : acc;
+              }, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
           <div className="bento-card cell-4">
-            <span className="stat-label syncopate">Stock Status</span>
-            <span className="stat-value grotesk">ACTIVE</span>
+            <span className="stat-label syncopate">Food Products</span>
+            <span className="stat-value neon-text grotesk" style={{ color: '#facc15' }}>
+              Rs. {products.reduce((acc, p) => {
+                const cat = categories.find(c => c.id === p.categoryId);
+                return cat?.type === 'FOOD' ? acc + (p.stock * p.price) : acc;
+              }, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
 
           {/* TABLE */}

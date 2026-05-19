@@ -10,6 +10,7 @@ import {
   Users,
   ReceiptText,
   Wallet,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +23,7 @@ const AppShell = ({ children }) => {
     { to: '/billing', label: 'Billing', icon: CreditCard },
     { to: '/receipts', label: 'Receipts', icon: ReceiptText },
     { to: '/receivables', label: 'Outstanding Receivables', icon: Wallet },
+    { to: '/daily-reports', label: 'Daily Reports', icon: FileSpreadsheet },
     { to: '/clients', label: 'Customers', icon: MapPin, adminOnly: true },
     { to: '/users', label: 'Staff', icon: Users, adminOnly: true },
   ].filter((item) => !item.adminOnly || user?.role === 'ADMIN');

@@ -151,7 +151,6 @@ const UsersPage = () => {
     return (
       !query ||
       staffUser.name.toLowerCase().includes(query) ||
-      staffUser.email.toLowerCase().includes(query) ||
       staffUser.role.toLowerCase().includes(query) ||
       staffUser.contact?.toLowerCase().includes(query)
     );
@@ -172,7 +171,7 @@ const UsersPage = () => {
               <Search size={18} />
               <input
                 type="text"
-                placeholder="Search staff, email, role"
+                placeholder="Search staff, role, contact"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -197,7 +196,7 @@ const UsersPage = () => {
                 <tbody>
                   {filteredUsers.map((u) => (
                     <tr key={u.id}>
-                      <td><div className="id-block"><span className="code">{u.email}</span><span className="client">{u.name}</span></div></td>
+                      <td><div className="id-block"><span className="client">{u.name}</span><span className="code">Login name</span></div></td>
                       <td><span className={`state-tag ${u.role === 'ADMIN' ? 'paid' : 'unpaid'}`}>{u.role}</span></td>
                       <td><span className="date">{u.contact || 'N/A'}</span></td>
                       <td><span className="date">{u.age || '-'}</span></td>
@@ -231,7 +230,6 @@ const UsersPage = () => {
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-row">
                 <div className="input-box"><label>NAME</label><input name="name" value={formData.name} onChange={handleInputChange} required /></div>
-                <div className="input-box"><label>EMAIL</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required /></div>
                 <div className="input-box"><label>PASSWORD</label><input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder={editingId ? "Leave blank to keep" : ""} required={!editingId} minLength={6} /></div>
               </div>
 

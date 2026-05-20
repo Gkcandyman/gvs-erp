@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Loader2, Eye, EyeOff, ShieldCheck, ArrowRight, PackageCheck, Truck, Boxes } from 'lucide-react';
+import { Lock, User, Loader2, Eye, EyeOff, ShieldCheck, ArrowRight, PackageCheck, Truck, Boxes } from 'lucide-react';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +18,7 @@ const LoginPage = () => {
     setError('');
     setIsLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(name, password);
     if (result.success) {
       navigate('/dashboard');
     } else {
@@ -76,14 +76,14 @@ const LoginPage = () => {
               )}
               
               <div className="auth-input">
-                <label className="syncopate">Email</label>
+                <label className="syncopate">Name</label>
                 <div className="input-wrap">
-                  <Mail size={18} className="icon" />
+                  <User size={18} className="icon" />
                   <input
-                    type="email"
-                    placeholder="admin@gvserp.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="System Admin"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
                   />
                 </div>

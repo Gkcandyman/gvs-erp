@@ -13,6 +13,9 @@ import { ClientsModule } from './clients/clients.module';
 import { ReceiptsModule } from './receipts/receipts.module';
 import { ReceivablesModule } from './receivables/receivables.module';
 import { DailyReportsModule } from './daily-reports/daily-reports.module';
+import { PurchasesModule } from './purchases/purchases.module';
+import { ExpensesModule } from './expenses/expenses.module';
+import { PriceHistoryModule } from './price-history/price-history.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { DailyReportsModule } from './daily-reports/daily-reports.module';
     ReceiptsModule,
     ReceivablesModule,
     DailyReportsModule,
+    PurchasesModule,
+    ExpensesModule,
+    PriceHistoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

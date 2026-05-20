@@ -43,6 +43,7 @@ export class BillingService {
 
     // ── Validate & prepare stock deductions ───────────────────────────────
     const stockUpdates: Array<{ id: number; newStock: number }> = [];
+    const pricedProducts: Array<{ productId: number; productName: string; price: number }> = [];
 
     for (const item of items) {
       let product: any = null;
@@ -67,6 +68,7 @@ export class BillingService {
           );
         }
         stockUpdates.push({ id: product.id, newStock: remaining });
+        pricedProducts.push({ productId: product.id, productName: product.name, price: item.price });
       }
     }
 
@@ -91,7 +93,12 @@ export class BillingService {
           amount: totalAmount,
           dueDate: new Date(dueDate),
           items: {
-            create: items.map(({ productId, ...rest }) => rest),
+            create: items.map((item) => ({
+              productId: item.productId || null,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+            })),
           },
         },
         include: { items: true },
@@ -115,6 +122,22 @@ export class BillingService {
             },
           },
         });
+
+        await Promise.all(
+          pricedProducts.map((item) =>
+            tx.productPriceHistory.create({
+              data: {
+                clientId: client.id,
+                clientName: client.name,
+                productId: item.productId,
+                productName: item.productName,
+                price: item.price,
+                date: new Date(),
+                source: 'BILLING',
+              },
+            })
+          )
+        );
       }
 
       return invoice;

@@ -11,6 +11,8 @@ import {
   ReceiptText,
   Wallet,
   FileSpreadsheet,
+  ShoppingCart,
+  Tags,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,10 +22,13 @@ const AppShell = ({ children }) => {
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/products', label: 'Inventory', icon: Layers },
+    { to: '/purchases', label: 'Purchases', icon: ShoppingCart },
     { to: '/billing', label: 'Billing', icon: CreditCard },
     { to: '/receipts', label: 'Receipts', icon: ReceiptText },
     { to: '/receivables', label: 'Outstanding Receivables', icon: Wallet },
+    { to: '/expenses', label: 'Expenses', icon: FileSpreadsheet },
     { to: '/daily-reports', label: 'Daily Reports', icon: FileSpreadsheet },
+    { to: '/price-history', label: 'Price History', icon: Tags },
     { to: '/clients', label: 'Customers', icon: MapPin, adminOnly: true },
     { to: '/users', label: 'Staff', icon: Users, adminOnly: true },
   ].filter((item) => !item.adminOnly || user?.role === 'ADMIN');

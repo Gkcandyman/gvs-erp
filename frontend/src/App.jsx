@@ -9,6 +9,9 @@ import OutstandingReceivablesPage from './pages/OutstandingReceivablesPage';
 import UsersPage from './pages/UsersPage';
 import ClientsPage from './pages/ClientsPage';
 import DailyReportsPage from './pages/DailyReportsPage';
+import PurchasesPage from './pages/PurchasesPage';
+import ExpensesPage from './pages/ExpensesPage';
+import PriceHistoryPage from './pages/PriceHistoryPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -45,6 +48,15 @@ function App() {
         />
 
         <Route 
+          path="/purchases" 
+          element={
+            <ProtectedRoute>
+              <PurchasesPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
           path="/receipts" 
           element={
             <ProtectedRoute>
@@ -63,10 +75,28 @@ function App() {
         />
 
         <Route 
+          path="/expenses" 
+          element={
+            <ProtectedRoute>
+              <ExpensesPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
           path="/daily-reports" 
           element={
             <ProtectedRoute>
               <DailyReportsPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/price-history" 
+          element={
+            <ProtectedRoute>
+              <PriceHistoryPage />
             </ProtectedRoute>
           } 
         />

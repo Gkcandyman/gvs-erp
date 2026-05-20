@@ -86,7 +86,7 @@ export class DashboardService {
 
     const metricsByDay = new Map(days.map((day) => [day.key, day]));
 
-    const [invoices, receipts, expenses] = await Promise.all([
+    const [invoices, receipts, purchases] = await Promise.all([
       db.invoice.findMany({
         where: {
           createdAt: { gte: startDate },
@@ -97,9 +97,9 @@ export class DashboardService {
         where: { date: { gte: startDate } },
         select: { amount: true, date: true },
       }),
-      db.expense.findMany({
-        where: { date: { gte: startDate } },
-        select: { amount: true, date: true },
+      db.purchaseEntry.findMany({
+        where: { purchaseDate: { gte: startDate } },
+        select: { totalAmount: true, purchaseDate: true },
       }),
     ]);
 
@@ -115,10 +115,10 @@ export class DashboardService {
       if (day) day.collections += receipt.amount || 0;
     });
 
-    expenses.forEach((expense) => {
-      const key = formatDateLocal(expense.date);
+    purchases.forEach((purchase) => {
+      const key = formatDateLocal(purchase.purchaseDate);
       const day = metricsByDay.get(key);
-      if (day) day.purchases += expense.amount || 0;
+      if (day) day.purchases += purchase.totalAmount || 0;
     });
 
     const series = Array.from(metricsByDay.values());

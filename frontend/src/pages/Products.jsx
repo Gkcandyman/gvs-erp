@@ -176,7 +176,7 @@ const ProductsPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="hologram-btn" onClick={openAddModal}><Plus size={20} /> ADD PURCHASE ENTRY</button>
+            <button className="hologram-btn" onClick={openAddModal}><Plus size={20} /> ADD PRODUCT</button>
           </div>
         </header>
 
@@ -279,7 +279,7 @@ const ProductsPage = () => {
         <div className="arctic-modal-overlay">
           <div className="arctic-modal">
             <div className="modal-header">
-              <h3 className="syncopate">{editingProductId ? 'Edit Purchase Entry' : 'Add Purchase Entry'}</h3>
+              <h3 className="syncopate">{editingProductId ? 'Edit Product' : 'Add Product'}</h3>
               <button onClick={() => { setShowAddModal(false); setEditingProductId(null); }}><X /></button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
@@ -293,7 +293,7 @@ const ProductsPage = () => {
                 </div>
               </div>
               <div className="form-row">
-                <div className="input-box"><label>{editingProductId ? 'CURRENT STOCK' : 'INITIAL STOCK'}</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
+                <div className="input-box"><label>OPENING / CURRENT STOCK</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
                 <div className="input-box"><label>UNIT VALUE (RS)</label><input type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} required /></div>
               </div>
               <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>

@@ -34,6 +34,7 @@ model Client {
   invoices         Invoice[]
   shipments        Shipment[]
   receipts         Receipt[]
+  priceHistory     ProductPriceHistory[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 }
@@ -58,6 +59,8 @@ model Product {
   price       Float
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
+  purchases   PurchaseEntry[]
+  priceHistory ProductPriceHistory[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -98,9 +101,37 @@ model InvoiceItem {
   id        Int     @id @default(autoincrement())
   invoiceId Int
   invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  productId Int?
   name      String
   quantity  Int
   price     Float
+}
+
+model ProductPriceHistory {
+  id          Int      @id @default(autoincrement())
+  clientId    Int
+  client      Client   @relation(fields: [clientId], references: [id])
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String
+  clientName  String
+  price       Float
+  source      String   @default("BILLING")
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model PurchaseEntry {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  product      Product  @relation(fields: [productId], references: [id])
+  quantity     Int
+  unitPrice    Float
+  totalAmount  Float
+  purchaseDate DateTime
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Receipt {

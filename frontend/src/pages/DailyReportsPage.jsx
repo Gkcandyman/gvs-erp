@@ -46,6 +46,16 @@ const getEmptyForm = (userName = '') => ({
   netAmount: 0,
 });
 
+const normalizeExpenseRows = (expenses = []) => {
+  const rows = expenses.map((expense) => ({
+    name: expense.name || expense.category || '',
+    amount: expense.amount || '',
+    remarks: expense.remarks || '',
+  }));
+  while (rows.length < 6) rows.push({ name: '', amount: '', remarks: '' });
+  return rows;
+};
+
 const calculateReport = (data) => {
   const totalVouchers = getVoucherCount(data.voucherNoFrom, data.voucherNoTo);
   const totalExpenses = (Array.isArray(data.expenses) ? data.expenses : []).reduce(
@@ -111,6 +121,8 @@ const DailyReportsPage = () => {
         ...prev,
         totalSales: numberValue(res.data.totalSales),
         totalCollection: numberValue(res.data.totalCollection),
+        expenses: normalizeExpenseRows(res.data.expenses || []),
+        totalExpenses: numberValue(res.data.totalExpenses),
       }));
     } catch (error) {
       console.error('Failed to fetch daily report totals', error);
@@ -141,24 +153,12 @@ const DailyReportsPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleExpenseChange = (index, field, value) => {
-    setFormData((prev) => {
-      const expenses = [...prev.expenses];
-      expenses[index] = { ...expenses[index], [field]: value };
-      return { ...prev, expenses };
-    });
-  };
-
   const handleCashChange = (index, value) => {
     setFormData((prev) => {
       const cashBreakdown = [...prev.cashBreakdown];
       cashBreakdown[index] = { ...cashBreakdown[index], count: value };
       return { ...prev, cashBreakdown };
     });
-  };
-
-  const handleAddExpenseRow = () => {
-    setFormData((prev) => ({ ...prev, expenses: [...prev.expenses, { name: '', amount: '' }] }));
   };
 
   const handleSubmit = async (e) => {
@@ -215,8 +215,7 @@ const DailyReportsPage = () => {
   };
 
   const getReportFormData = (report) => {
-    const expenses = Array.isArray(report.expenses) ? [...report.expenses] : [];
-    while (expenses.length < 6) expenses.push({ name: '', amount: '' });
+    const expenses = normalizeExpenseRows(Array.isArray(report.expenses) ? report.expenses : []);
 
     const savedCash = Array.isArray(report.cashBreakdown) ? report.cashBreakdown : [];
     const cashBreakdown = defaultCashDenominations.map((denomination) => {
@@ -429,16 +428,14 @@ const DailyReportsPage = () => {
                             <input
                               type="text"
                               value={expense.name}
-                              onChange={(e) => handleExpenseChange(index, 'name', e.target.value)}
-                              readOnly={isViewOnly}
+                              readOnly
                             />
                           </td>
                           <td>
                             <input
                               type="number"
                               value={expense.amount}
-                              onChange={(e) => handleExpenseChange(index, 'amount', e.target.value)}
-                              readOnly={isViewOnly}
+                              readOnly
                             />
                           </td>
                         </tr>
@@ -451,11 +448,7 @@ const DailyReportsPage = () => {
                       </tr>
                     </tfoot>
                   </table>
-                  {!isViewOnly && (
-                    <button type="button" className="add-line-btn hide-on-print" onClick={handleAddExpenseRow}>
-                      <Plus size={14} /> Add Expense
-                    </button>
-                  )}
+                  <div className="amount-match ok">Expenses are loaded from the Expenses module</div>
                 </section>
 
                 <section className="print-section">

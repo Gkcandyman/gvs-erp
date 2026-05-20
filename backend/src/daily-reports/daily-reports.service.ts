@@ -62,9 +62,28 @@ export class DailyReportsService {
       }
     });
 
+    const expenses = await this.prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        }
+      }
+    });
+
     const totalSales = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
     const totalCollection = receipts.reduce((sum, rec) => sum + (rec.amount || 0), 0);
+    const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
 
-    return { totalSales, totalCollection };
+    return {
+      totalSales,
+      totalCollection,
+      totalExpenses,
+      expenses: expenses.map((expense) => ({
+        name: expense.category,
+        amount: expense.amount,
+        remarks: expense.remarks || '',
+      })),
+    };
   }
 }

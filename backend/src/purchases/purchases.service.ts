@@ -15,21 +15,37 @@ export class PurchasesService {
 
   async create(data: any) {
     const db = this.prisma as any;
-    const productId = Number(data.productId);
+    let productId = Number(data.productId);
     const quantity = Number(data.quantity);
     const unitPrice = Number(data.unitPrice);
 
-    if (!productId || !quantity || quantity <= 0 || !Number.isFinite(unitPrice)) {
+    if (!quantity || quantity <= 0 || !Number.isFinite(unitPrice)) {
       throw new BadRequestException('Product, quantity, and unit price are required');
     }
 
-    const product = await db.product.findUnique({ where: { id: productId } });
-    if (!product) throw new NotFoundException('Product not found');
+    let product = productId ? await db.product.findUnique({ where: { id: productId } }) : null;
 
     const purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : new Date();
     const totalAmount = quantity * unitPrice;
 
     return db.$transaction(async (tx) => {
+      if (!product) {
+        if (!data.productName || !data.categoryId) {
+          throw new BadRequestException('New product name and category are required');
+        }
+
+        product = await tx.product.create({
+          data: {
+            name: data.productName,
+            categoryId: Number(data.categoryId),
+            stock: 0,
+            price: unitPrice,
+            description: data.description || null,
+          },
+        });
+        productId = product.id;
+      }
+
       const purchase = await tx.purchaseEntry.create({
         data: {
           productId,

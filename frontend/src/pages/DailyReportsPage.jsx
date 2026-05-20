@@ -448,7 +448,7 @@ const DailyReportsPage = () => {
                       </tr>
                     </tfoot>
                   </table>
-                  <div className="amount-match ok">Expenses are loaded from the Expenses module</div>
+                  <div className="amount-match ok">Expenses include purchases and daily expense entries</div>
                 </section>
 
                 <section className="print-section">

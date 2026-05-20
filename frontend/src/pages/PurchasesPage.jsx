@@ -4,7 +4,10 @@ import api from '../services/api';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 
 const emptyForm = {
+  productMode: 'existing',
   productId: '',
+  productName: '',
+  categoryId: '',
   quantity: '',
   unitPrice: '',
   purchaseDate: new Date().toISOString().split('T')[0],
@@ -14,6 +17,7 @@ const emptyForm = {
 const PurchasesPage = () => {
   const [purchases, setPurchases] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,12 +26,18 @@ const PurchasesPage = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [purchasesRes, productsRes] = await Promise.all([
-        api.get('/purchases'),
-        api.get('/inventory'),
-      ]);
-      setPurchases(purchasesRes.data);
+      const [productsRes, categoriesRes] = await Promise.all([
+          api.get('/inventory'),
+          api.get('/inventory/categories'),
+        ]);
       setProducts(productsRes.data);
+      setCategories(categoriesRes.data);
+      try {
+        const purchasesRes = await api.get('/purchases');
+        setPurchases(purchasesRes.data);
+      } catch (error) {
+        setPurchases([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +62,8 @@ const PurchasesPage = () => {
     try {
       await api.post('/purchases', {
         ...formData,
-        productId: Number(formData.productId),
+        productId: formData.productMode === 'existing' ? Number(formData.productId) : undefined,
+        categoryId: formData.productMode === 'new' ? Number(formData.categoryId) : undefined,
         quantity: Number(formData.quantity),
         unitPrice: Number(formData.unitPrice),
       });
@@ -146,12 +157,10 @@ const PurchasesPage = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-row">
                 <div className="input-box">
-                  <label>PRODUCT</label>
-                  <select value={formData.productId} onChange={(e) => handleProductChange(e.target.value)} required>
-                    <option value="">Select product</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>{product.name}</option>
-                    ))}
+                  <label>PRODUCT TYPE</label>
+                  <select value={formData.productMode} onChange={(e) => setFormData((p) => ({ ...p, productMode: e.target.value, productId: '', productName: '', categoryId: '' }))}>
+                    <option value="existing">Existing product</option>
+                    <option value="new">New product</option>
                   </select>
                 </div>
                 <div className="input-box">
@@ -159,13 +168,42 @@ const PurchasesPage = () => {
                   <input type="date" value={formData.purchaseDate} onChange={(e) => setFormData((p) => ({ ...p, purchaseDate: e.target.value }))} required />
                 </div>
               </div>
+              {formData.productMode === 'existing' ? (
+                <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
+                  <div className="input-box">
+                    <label>PRODUCT</label>
+                    <select value={formData.productId} onChange={(e) => handleProductChange(e.target.value)} required>
+                      <option value="">Select product</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>{product.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div className="form-row">
+                  <div className="input-box">
+                    <label>NEW PRODUCT NAME</label>
+                    <input value={formData.productName} onChange={(e) => setFormData((p) => ({ ...p, productName: e.target.value }))} required />
+                  </div>
+                  <div className="input-box">
+                    <label>CATEGORY</label>
+                    <select value={formData.categoryId} onChange={(e) => setFormData((p) => ({ ...p, categoryId: e.target.value }))} required>
+                      <option value="">Select category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
               <div className="form-row">
                 <div className="input-box">
-                  <label>QUANTITY</label>
+                  <label>UNITS PURCHASED</label>
                   <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData((p) => ({ ...p, quantity: e.target.value }))} required />
                 </div>
                 <div className="input-box">
-                  <label>UNIT PRICE</label>
+                  <label>PRICE PER UNIT</label>
                   <input type="number" min="0" step="0.01" value={formData.unitPrice} onChange={(e) => setFormData((p) => ({ ...p, unitPrice: e.target.value }))} required />
                 </div>
               </div>

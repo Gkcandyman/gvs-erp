@@ -2,12 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { 
-  Package, Search, Plus, Filter, Trash2, Edit2,
-  Loader2, LogOut, LayoutDashboard, Users, 
-  Truck, ShieldCheck, BarChart3, Bell, X, 
-  Globe, CreditCard, RefreshCw, AlertCircle,
-  PackageCheck, Layers, Command, Box, Download,
-  Database, Activity, MapPin
+  Search, RefreshCw, Download, Database
 } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import { exportCsv, exportExcel, exportPdf } from '../utils/exporters';
@@ -17,28 +12,9 @@ const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [editingProductId, setEditingProductId] = useState(null);
   const [exportFormat, setExportFormat] = useState('pdf');
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    categoryId: '',
-    stock: 0,
-    price: 0.0,
-    description: ''
-  });
-
-  const emptyForm = {
-    name: '',
-    categoryId: '',
-    stock: 0,
-    price: 0.0,
-    description: ''
-  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -60,53 +36,6 @@ const ProductsPage = () => {
     fetchData();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: (name === 'stock' || name === 'categoryId') ? parseInt(value) : 
-              name === 'price' ? parseFloat(value) : value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      if (editingProductId) {
-        await api.put(`/inventory/${editingProductId}`, formData);
-      } else {
-        await api.post('/inventory', formData);
-      }
-      setShowAddModal(false);
-      setEditingProductId(null);
-      setFormData(emptyForm);
-      fetchData();
-    } catch (error) {
-      alert(error.response?.data?.message || error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const openAddModal = () => {
-    setEditingProductId(null);
-    setFormData(emptyForm);
-    setShowAddModal(true);
-  };
-
-  const openEditModal = (product) => {
-    setEditingProductId(product.id);
-    setFormData({
-      name: product.name,
-      categoryId: product.categoryId,
-      stock: product.stock,
-      price: product.price,
-      description: product.description || ''
-    });
-    setShowAddModal(true);
-  };
-
   const filteredProducts = products.filter((product) => {
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
@@ -119,12 +48,13 @@ const ProductsPage = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const exportHeaders = ['Product Name', 'Category', 'Unit Count', 'Unit Price'];
+  const exportHeaders = ['Product Name', 'Category', 'Stock Units', 'Unit Price', 'Stock Value'];
   const exportRows = filteredProducts.map((p) => [
     p.name,
     p.category?.name || 'Uncategorized',
     p.stock,
     p.price,
+    p.stock * p.price,
   ]);
 
   const downloadProducts = () => {
@@ -137,16 +67,6 @@ const ProductsPage = () => {
       return;
     }
     exportPdf('GVS Inventory Register', exportHeaders, exportRows);
-  };
-
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Delete "${name}" from inventory? This cannot be undone.`)) return;
-    try {
-      await api.delete(`/inventory/${id}`);
-      fetchData();
-    } catch (e) {
-      alert(e.response?.data?.message || 'Failed to delete product');
-    }
   };
 
   if (isLoading) {
@@ -176,7 +96,6 @@ const ProductsPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="hologram-btn" onClick={openAddModal}><Plus size={20} /> ADD PRODUCT</button>
           </div>
         </header>
 
@@ -187,7 +106,7 @@ const ProductsPage = () => {
             <span className="stat-value neon-text grotesk">{products.length} ITEMS</span>
           </div>
           <div className="bento-card cell-4">
-            <span className="stat-label syncopate">Packaging Material</span>
+            <span className="stat-label syncopate">Packaging Stock Value</span>
             <span className="stat-value neon-text grotesk" style={{ color: '#38bdf8' }}>
               Rs. {products.reduce((acc, p) => {
                 const cat = categories.find(c => c.id === p.categoryId);
@@ -196,7 +115,7 @@ const ProductsPage = () => {
             </span>
           </div>
           <div className="bento-card cell-4">
-            <span className="stat-label syncopate">Food Products</span>
+            <span className="stat-label syncopate">Food Stock Value</span>
             <span className="stat-value neon-text grotesk" style={{ color: '#facc15' }}>
               Rs. {products.reduce((acc, p) => {
                 const cat = categories.find(c => c.id === p.categoryId);
@@ -242,9 +161,9 @@ const ProductsPage = () => {
                   <tr>
                     <th className="syncopate">Product Detail</th>
                     <th className="syncopate">Category</th>
-                    <th className="syncopate">Unit Count</th>
+                    <th className="syncopate">Stock Units</th>
                     <th className="syncopate">Unit Price</th>
-                    <th className="syncopate">Action</th>
+                    <th className="syncopate">Stock Value</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,17 +173,12 @@ const ProductsPage = () => {
                       <td><span className="payload-chip">{product.category?.name}</span></td>
                       <td><span className="valuation" style={{ color: product.stock < 1000 ? '#ef4444' : 'var(--text-dark)' }}>{product.stock.toLocaleString()}</span></td>
                       <td><span className="date">Rs.{product.price.toFixed(2)}</span></td>
-                      <td>
-                        <div className="row-cmds">
-                          <button onClick={() => openEditModal(product)} className="cmd-icon" title="Edit Product"><Edit2 size={16} /></button>
-                          <button onClick={() => handleDelete(product.id, product.name)} className="cmd-icon" style={{ color: '#ef4444' }} title="Delete Product"><Trash2 size={16} /></button>
-                        </div>
-                      </td>
+                      <td><span className="valuation">Rs.{(product.stock * product.price).toFixed(2)}</span></td>
                     </tr>
                   ))}
                   {filteredProducts.length === 0 && (
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No products match the current search or category.</td>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No products match the current search or category.</td>
                     </tr>
                   )}
                 </tbody>
@@ -274,39 +188,6 @@ const ProductsPage = () => {
         </div>
       </main>
 
-      {/* MODAL */}
-      {showAddModal && (
-        <div className="arctic-modal-overlay">
-          <div className="arctic-modal">
-            <div className="modal-header">
-              <h3 className="syncopate">{editingProductId ? 'Edit Product' : 'Add Product'}</h3>
-              <button onClick={() => { setShowAddModal(false); setEditingProductId(null); }}><X /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="modal-form">
-              <div className="form-row">
-                <div className="input-box"><label>PRODUCT NAME</label><input name="name" value={formData.name} onChange={handleInputChange} required /></div>
-                <div className="input-box"><label>CATEGORY</label>
-                  <select name="categoryId" value={formData.categoryId} onChange={handleInputChange} required>
-                    <option value="">SELECT CATEGORY</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="input-box"><label>OPENING / CURRENT STOCK</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
-                <div className="input-box"><label>UNIT VALUE (RS)</label><input type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} required /></div>
-              </div>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
-                <div className="input-box"><label>DESCRIPTION</label><input name="description" value={formData.description} onChange={handleInputChange} placeholder="Optional product notes" /></div>
-              </div>
-              <div className="modal-footer">
-                <div className="total-box"><span className="syncopate">Status</span><span className="val neon-text">{editingProductId ? 'READY TO UPDATE' : 'READY TO SAVE'}</span></div>
-                <button type="submit" className="hologram-btn large" disabled={isSubmitting}>{editingProductId ? 'UPDATE ENTRY' : 'SAVE ENTRY'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 };

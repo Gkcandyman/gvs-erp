@@ -86,7 +86,7 @@ export class DashboardService {
 
     const metricsByDay = new Map(days.map((day) => [day.key, day]));
 
-    const [invoices, receipts, purchases] = await Promise.all([
+    const [invoices, receipts] = await Promise.all([
       db.invoice.findMany({
         where: {
           createdAt: { gte: startDate },
@@ -97,11 +97,17 @@ export class DashboardService {
         where: { date: { gte: startDate } },
         select: { amount: true, date: true },
       }),
-      db.purchaseEntry.findMany({
+    ]);
+
+    let purchases = [];
+    try {
+      purchases = await db.purchaseEntry.findMany({
         where: { purchaseDate: { gte: startDate } },
         select: { totalAmount: true, purchaseDate: true },
-      }),
-    ]);
+      });
+    } catch (error) {
+      purchases = [];
+    }
 
     invoices.forEach((invoice) => {
       const key = formatDateLocal(invoice.createdAt);

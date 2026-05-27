@@ -18,11 +18,12 @@ import { useAuth } from '../context/AuthContext';
 
 const AppShell = ({ children }) => {
   const { user, logout } = useAuth();
+  const canViewModule = (module) => user?.role === 'ADMIN' || user?.permissions?.[module]?.view === true;
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/products', label: 'Inventory', icon: Layers },
-    { to: '/purchases', label: 'Purchases', icon: ShoppingCart },
+    { to: '/purchases', label: 'Purchases', icon: ShoppingCart, module: 'purchase' },
     { to: '/billing', label: 'Billing', icon: CreditCard },
     { to: '/receipts', label: 'Receipts', icon: ReceiptText },
     { to: '/receivables', label: 'Outstanding Receivables', icon: Wallet },
@@ -31,7 +32,7 @@ const AppShell = ({ children }) => {
     { to: '/price-history', label: 'Price History', icon: Tags },
     { to: '/clients', label: 'Customers', icon: MapPin, adminOnly: true },
     { to: '/users', label: 'Staff', icon: Users, adminOnly: true },
-  ].filter((item) => !item.adminOnly || user?.role === 'ADMIN');
+  ].filter((item) => (!item.adminOnly || user?.role === 'ADMIN') && (!item.module || canViewModule(item.module)));
 
   return (
     <div className="erp-shell">

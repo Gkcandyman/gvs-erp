@@ -10,15 +10,17 @@ export class BillingService {
     const today = new Date();
     const datePart = today.toISOString().slice(0, 10).replace(/-/g, '');
     const prefix = `INV-${datePart}`;
-    const count = await db.invoice.count({
-      where: {
-        invoiceNumber: {
-          startsWith: prefix,
-        },
-      },
-    });
 
-    return `${prefix}-${String(count + 1).padStart(3, '0')}`;
+    const invoices = await db.invoice.findMany({
+      select: { invoiceNumber: true },
+    });
+    const lastSerial = invoices.reduce((max, invoice) => {
+      const match = invoice.invoiceNumber?.match(/-(\d+)$/);
+      const serial = match ? Number(match[1]) : 0;
+      return Number.isFinite(serial) ? Math.max(max, serial) : max;
+    }, 0);
+
+    return `${prefix}-${String(lastSerial + 1).padStart(3, '0')}`;
   }
 
   async findAll() {

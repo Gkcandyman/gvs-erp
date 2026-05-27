@@ -8,6 +8,13 @@ import {
 import { Navigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 
+const getDefaultPermissions = () => ({
+  billing: { view: true, edit: false },
+  stock: { view: true, edit: false, delete: false },
+  receipt: { view: true, edit: false, delete: false },
+  purchase: { view: false, edit: false, delete: false },
+});
+
 const UsersPage = () => {
   const { user, logout } = useAuth();
   const [users, setUsers] = useState([]);
@@ -20,21 +27,13 @@ const UsersPage = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', role: 'STAFF',
     age: '', contact: '', address: '',
-    permissions: {
-      billing: { view: true, edit: false },
-      stock: { view: true, edit: false, delete: false },
-      receipt: { view: true, edit: false, delete: false },
-    }
+    permissions: getDefaultPermissions()
   });
 
   const emptyForm = {
     name: '', email: '', password: '', role: 'STAFF',
     age: '', contact: '', address: '',
-    permissions: {
-      billing: { view: true, edit: false },
-      stock: { view: true, edit: false, delete: false },
-      receipt: { view: true, edit: false, delete: false },
-    }
+    permissions: getDefaultPermissions()
   };
 
   // Admin Only Route
@@ -104,10 +103,9 @@ const UsersPage = () => {
       age: u.age || '',
       contact: u.contact || '',
       address: u.address || '',
-      permissions: u.permissions || {
-        billing: { view: true, edit: false },
-        stock: { view: true, edit: false, delete: false },
-        receipt: { view: true, edit: false, delete: false },
+      permissions: {
+        ...getDefaultPermissions(),
+        ...(u.permissions || {}),
       }
     });
     setShowModal(true);

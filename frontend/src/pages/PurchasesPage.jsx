@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import AppShell from '../components/AppShell';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 const emptyForm = {
   productMode: 'existing',
@@ -15,6 +17,9 @@ const emptyForm = {
 };
 
 const PurchasesPage = () => {
+  const { user } = useAuth();
+  const canManagePurchases = user?.role === 'ADMIN';
+  const canViewPurchases = canManagePurchases || user?.permissions?.purchase?.view === true;
   const [purchases, setPurchases] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -26,12 +31,19 @@ const PurchasesPage = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
-          api.get('/inventory'),
-          api.get('/inventory/categories'),
-        ]);
-      setProducts(productsRes.data);
-      setCategories(categoriesRes.data);
+      if (!canViewPurchases) {
+        setPurchases([]);
+        return;
+      }
+
+      if (canManagePurchases) {
+        const [productsRes, categoriesRes] = await Promise.all([
+            api.get('/inventory'),
+            api.get('/inventory/categories'),
+          ]);
+        setProducts(productsRes.data);
+        setCategories(categoriesRes.data);
+      }
       try {
         const purchasesRes = await api.get('/purchases');
         setPurchases(purchasesRes.data);
@@ -45,7 +57,7 @@ const PurchasesPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [canManagePurchases, canViewPurchases]);
 
   const handleProductChange = (productId) => {
     const product = products.find((item) => item.id === Number(productId));
@@ -88,6 +100,7 @@ const PurchasesPage = () => {
   };
 
   return (
+    !canViewPurchases ? <Navigate to="/dashboard" replace /> :
     <AppShell>
       <main className="arctic-main">
         <header className="arctic-header">
@@ -95,11 +108,13 @@ const PurchasesPage = () => {
             <h1 className="syncopate">Purchase Entries</h1>
             <p className="grotesk">Stock-in entries by actual purchase date</p>
           </div>
-          <div className="header-meta">
-            <button className="hologram-btn" onClick={() => setShowModal(true)}>
-              <Plus size={20} /> NEW PURCHASE
-            </button>
-          </div>
+          {canManagePurchases && (
+            <div className="header-meta">
+              <button className="hologram-btn" onClick={() => setShowModal(true)}>
+                <Plus size={20} /> NEW PURCHASE
+              </button>
+            </div>
+          )}
         </header>
 
         <div className="bento-grid">
@@ -118,7 +133,7 @@ const PurchasesPage = () => {
                     <th>Unit Price</th>
                     <th>Total</th>
                     <th>Remarks</th>
-                    <th>Action</th>
+                    {canManagePurchases && <th>Action</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -130,15 +145,17 @@ const PurchasesPage = () => {
                       <td>Rs.{Number(purchase.unitPrice).toFixed(2)}</td>
                       <td><span className="valuation">Rs.{Number(purchase.totalAmount).toFixed(2)}</span></td>
                       <td>{purchase.remarks || '-'}</td>
-                      <td>
-                        <button className="cmd-icon" style={{ color: '#ef4444' }} onClick={() => handleDelete(purchase.id)} title="Delete">
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+                      {canManagePurchases && (
+                        <td>
+                          <button className="cmd-icon" style={{ color: '#ef4444' }} onClick={() => handleDelete(purchase.id)} title="Delete">
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {purchases.length === 0 && !isLoading && (
-                    <tr><td colSpan="7" style={{ textAlign: 'center', padding: 30 }}>No purchase entries found.</td></tr>
+                    <tr><td colSpan={canManagePurchases ? 7 : 6} style={{ textAlign: 'center', padding: 30 }}>No purchase entries found.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -147,7 +164,7 @@ const PurchasesPage = () => {
         </div>
       </main>
 
-      {showModal && (
+      {canManagePurchases && showModal && (
         <div className="arctic-modal-overlay">
           <div className="arctic-modal">
             <div className="modal-header">

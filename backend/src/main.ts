@@ -6,7 +6,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      "https://gvs-erp-sand.vercel.app",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  });
 
   // Set global prefix
   app.setGlobalPrefix('api');

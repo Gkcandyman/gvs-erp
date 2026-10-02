@@ -64,23 +64,19 @@ async function main() {
     { name: 'Dried Oregano', sku: 'FOOD-002', stock: 2000, price: 5.0, categoryId: catFood.id },
   ];
 
-  for (const item of productData) {
-    await prisma.product.upsert({
-      where: { sku: item.sku },
-      update: {
-        name: item.name,
-        stock: item.stock,
-        price: item.price,
-        categoryId: item.categoryId,
-      },
-      create: {
-        name: item.name,
-        sku: item.sku,
-        stock: item.stock,
-        price: item.price,
-        categoryId: item.categoryId,
-      },
-    });
+    for (const item of productData) {
+    const existing = await prisma.product.findFirst({ where: { name: item.name } });
+    const data = {
+      name: item.name,
+      stock: item.stock,
+      price: item.price,
+      categoryId: item.categoryId,
+    };
+    if (existing) {
+      await prisma.product.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.product.create({ data });
+    }
   }
 
   // 3. Create Shipments
